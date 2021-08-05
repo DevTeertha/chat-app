@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chat App</title>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        color: white;
+    }
+    html, body{
+        height: 100%;
+    }
+    .container, .chat-container{
+        height: 100%;
+    }
+    .message-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+    }
+
+    .other-message {
+        text-align: left;
+    }
+
+    .other-message .message-text span {
+        background-color: #9CA3AF;
+    }
+
+    .you-message {
+        text-align: right;
+    }
+
+    .you-message .message-text span {
+        background-color: #60A5FA;
+    }
+
+    @media only screen and (max-width: 992px) {
+        .chat-container{
+            width: 100%;
+        }
+        .chat-content{
+            height: 85%;
+        }
+        .message-container{
+            height: 90%;
+        }
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div class="chat-container w-2/5 border mx-auto shadow-lg rounded-xl bg-blue-500">
+            <div class="chat-header flex bg-blue-500 rounded-xl shadow-lg">
+                <p class="text-lg font-bold p-5">ChatAPP</p>
+                <p id="name-header" class="ml-auto text-lg font-bold p-5"></p>
+            </div>
+            <div class="chat-content p-5">
+                <div id="msg-container" class="message-container border overflow-scroll rounded-md h-64 bg-gray-50">
+                    <div class="message">
+                        <div class="message-row other-message py-1 px-4">
+                            <div class="message-title">
+                                <span class="text-gray-700 text-xs font-bold">Dev</span>
+                            </div>
+                            <div class="message-text py-2">
+                                <span class="p-2 rounded-lg">Hello</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-message flex mt-5">
+                    <input
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="input-message-field" type="text" placeholder="Type Something">
+                    <button onclick="sendMsg();"
+                        class="bg-indigo-700 hover:bg-indigo-900 text-white font-bold py-2 px-4 rounded">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let yourName;
+        do {
+            yourName = prompt("Enter Your Name:");
+        } while (!yourName);
+        document.getElementById("name-header").innerHTML = yourName;
+
+        let socket = io();
+        const inputMessage = document.getElementById("input-message-field");
+
+        // Send to server
+        const sendMsg = () => {
+            const message = {
+                name: yourName,
+                msg: inputMessage.value
+            }
+            socket.emit("sendMessage", message);
+            inputMessage.value = "";
+            inputMessage.focus();
+        }
+
+        // Get from server
+        socket.on("displayMessage", (message) => {
+            const { name, msg } = message;
+            if (name === yourName) {
+                displayMsg(message, "you-message");
+            }
+            else {
+                displayMsg(message, "other-message");
+            }
+        })
+
+        const displayMsg = (message, type) => {
+            const { name, msg } = message;
+            const msgContainer = document.getElementById("msg-container");
+            const msgRow = document.createElement("div");
+            msgRow.className = `message-row ${type} py-1 px-4`;
+            const HTML = `
+                <div class="message-title">
+                    <span class="text-gray-700 text-xs font-bold">${name}</span>
+                </div>
+                <div class="message-text py-2">
+                    <span class="bg-gray-400 p-2 rounded-lg">${msg}</span>
+                </div>
+            `
+            msgRow.innerHTML = HTML;
+            msgContainer.appendChild(msgRow);
+        }
+    </script>
+</body>
+
+</html>
