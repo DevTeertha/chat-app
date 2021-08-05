@@ -15,23 +15,35 @@
         box-sizing: border-box;
         color: white;
     }
-    html, body{
+
+    html,
+    body {
         height: 100%;
     }
-    .container, .chat-container{
+
+    .container,
+    .chat-container {
         height: 100%;
     }
+
+    .chat-container {
+        padding: 0 2em;
+        display: flex;
+        flex-direction: column;
+    }
+
     .message-container {
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
+        overflow: scroll;
+        height: 100%;
     }
 
     .other-message {
         text-align: left;
     }
 
-    .other-message .message-text span {
+    .other-message .message-text .msg {
         background-color: #9CA3AF;
     }
 
@@ -39,63 +51,98 @@
         text-align: right;
     }
 
-    .you-message .message-text span {
+    .you-message .message-text .msg {
         background-color: #60A5FA;
     }
 
-    @media only screen and (max-width: 992px) {
-        .chat-container{
+    .msg {
+        display: inline-block;
+    }
+
+    .chat-content {
+        height: 100%;
+    }
+
+    @media only screen and (max-height: 1060px) {
+        .chat-container {
             width: 100%;
         }
-        .chat-content{
-            height: 85%;
+
+        .chat-content {
+            height: 80%;
         }
-        .message-container{
-            height: 90%;
+    }
+
+    @media only screen and (max-width: 992px) {
+        .chat-container {
+            width: 100%;
+        }
+
+        .chat-content {
+            height: 80%;
         }
     }
 </style>
 
 <body>
-    <div class="container">
+    <div style="height: 100%;">
         <div class="chat-container w-2/5 border mx-auto shadow-lg rounded-xl bg-blue-500">
-            <div class="chat-header flex bg-blue-500 rounded-xl shadow-lg">
+            <div class="chat-header mb-2 flex bg-blue-500 rounded-xl shadow-lg">
                 <p class="text-lg font-bold p-5">ChatAPP</p>
                 <p id="name-header" class="ml-auto text-lg font-bold p-5"></p>
             </div>
-            <div class="chat-content p-5">
-                <div id="msg-container" class="message-container border overflow-scroll rounded-md h-64 bg-gray-50">
-                    <div class="message">
-                        <div class="message-row other-message py-1 px-4">
+            <div class="chat-content mb-3">
+                <div class="message-container border rounded-md h-64 bg-gray-50">
+                    <div id="msg-container" class="message">
+                        <!--Message ROW START-->
+                        <!-- <div class="message-row other-message py-1 px-4">
                             <div class="message-title">
                                 <span class="text-gray-700 text-xs font-bold">Dev</span>
                             </div>
-                            <div class="message-text py-2">
-                                <span class="p-2 rounded-lg">Hello</span>
+                            <div class="message-text">
+                                <div class="msg p-2 rounded-xl">
+                                    <div>
+                                        <div style="overflow-wrap: break-word;">Hello</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        </div> -->
+                        <!--Message ROW END-->
                     </div>
                 </div>
-                <div class="input-message flex mt-5">
-                    <input
-                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="input-message-field" type="text" placeholder="Type Something">
-                    <button onclick="sendMsg();"
-                        class="bg-indigo-700 hover:bg-indigo-900 text-white font-bold py-2 px-4 rounded">Send</button>
-                </div>
+            </div>
+            <div class="input-message flex mb-4"">
+                <input
+                    class=" shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight
+                focus:outline-none focus:shadow-outline" id="input-message-field" type="text"
+                placeholder="Type Something">
+                <button onclick="sendMsg();"
+                    class="bg-indigo-700 hover:bg-indigo-900 text-white font-bold py-2 px-4 rounded">Send</button>
             </div>
         </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        let socket = io();
         let yourName;
         do {
             yourName = prompt("Enter Your Name:");
         } while (!yourName);
         document.getElementById("name-header").innerHTML = yourName;
 
-        let socket = io();
         const inputMessage = document.getElementById("input-message-field");
+
+        // Joined
+        socket.emit("sendJoin", yourName);
+
+        // Get Joined
+        socket.on("join", (name)=>{
+            if(name===yourName){
+                alert("You have Joined!");
+            }else{
+                alert(`${name} has joined!`);
+            }
+        })
 
         // Send to server
         const sendMsg = () => {
@@ -106,6 +153,7 @@
             socket.emit("sendMessage", message);
             inputMessage.value = "";
             inputMessage.focus();
+            inputMessage.scrollIntoView();
         }
 
         // Get from server
@@ -125,12 +173,18 @@
             const msgRow = document.createElement("div");
             msgRow.className = `message-row ${type} py-1 px-4`;
             const HTML = `
+            <div class="message">
                 <div class="message-title">
                     <span class="text-gray-700 text-xs font-bold">${name}</span>
                 </div>
-                <div class="message-text py-2">
-                    <span class="bg-gray-400 p-2 rounded-lg">${msg}</span>
+                <div class="message-text">
+                    <div class="msg p-2 rounded-xl">
+                        <div style="overflow-wrap: anywhere;">
+                            <div>${msg}</div>
+                        </div>
+                    </div>
                 </div>
+            </div>
             `
             msgRow.innerHTML = HTML;
             msgContainer.appendChild(msgRow);
